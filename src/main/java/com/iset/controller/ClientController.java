@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/clients")
-@RequiredArgsConstructor
+
 @CrossOrigin(origins = "*")
 public class ClientController {
     

@@ -1,5 +1,6 @@
 package com.iset.entity;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,10 +32,11 @@ public class Article {
     @Column(nullable = false)
     private String titre;
     
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
     
-    @Column(nullable = true)
+    // Store file path like: /uploads/images/uuid.jpg
+    @Column(nullable = true, length = 500)
     private String imageURL;
     
     @ManyToOne
@@ -43,6 +45,13 @@ public class Article {
     
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL)
     private Set<Commentaire> commentaires = new HashSet<>();
+
+    // Soft delete fields
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isDeleted = false;
+
+    @Column(nullable = true)
+    private LocalDateTime deletedAt;
 
 	public Long getId() {
 		return id;
@@ -91,7 +100,20 @@ public class Article {
 	public void setCommentaires(Set<Commentaire> commentaires) {
 		this.commentaires = commentaires;
 	}
-    
-    
-    
+
+	public Boolean getIsDeleted() {
+		return isDeleted;
+	}
+
+	public void setIsDeleted(Boolean isDeleted) {
+		this.isDeleted = isDeleted;
+	}
+
+	public LocalDateTime getDeletedAt() {
+		return deletedAt;
+	}
+
+	public void setDeletedAt(LocalDateTime deletedAt) {
+		this.deletedAt = deletedAt;
+	}
 }

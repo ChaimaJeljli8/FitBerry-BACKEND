@@ -34,7 +34,7 @@ public class Client extends User {
     @Column(name = "niveau_activite", length = 50)
     private String niveauActivite;
 
-    // Getters and Setters
+
     public Integer getAge() {
         return age;
     }

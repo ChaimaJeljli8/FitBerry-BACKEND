@@ -1,134 +1,98 @@
 package com.iset.controller;
 
-
-
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.iset.DTO.ArticleDTO;
 import com.iset.DTO.CreateArticleRequest;
 import com.iset.service.ArticleService;
+import com.iset.service.FileStorageService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/articles")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ArticleController {
-    
-    private final ArticleService articleService;
-    
-    
-    public ArticleController(ArticleService articleService) {
-		super();
-		this.articleService = articleService;
-	}
 
-	// Créer un article (nutritionniste seulement)
+	private final ArticleService articleService;
+    private final FileStorageService fileStorageService;
+
+    public ArticleController(ArticleService articleService, FileStorageService fileStorageService) {
+        this.articleService = articleService;
+        this.fileStorageService = fileStorageService;
+    }
+
+    // Create article
     @PostMapping("/nutritionniste/{nutritionnisteId}")
     public ResponseEntity<ArticleDTO> createArticle(
-            @Valid @RequestBody CreateArticleRequest request,
+            @RequestBody CreateArticleRequest request,
             @PathVariable Long nutritionnisteId) {
-        try {
-            ArticleDTO article = articleService.createArticle(request, nutritionnisteId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(article);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        ArticleDTO article = articleService.createArticle(request, nutritionnisteId);
+        return ResponseEntity.ok(article);
     }
-    
-    // Mettre à jour un article (nutritionniste auteur seulement)
+
+    // Update article
     @PutMapping("/{articleId}/nutritionniste/{nutritionnisteId}")
     public ResponseEntity<ArticleDTO> updateArticle(
             @PathVariable Long articleId,
-            @Valid @RequestBody CreateArticleRequest request,
+            @RequestBody CreateArticleRequest request,
             @PathVariable Long nutritionnisteId) {
-        try {
-            ArticleDTO article = articleService.updateArticle(articleId, request, nutritionnisteId);
-            return ResponseEntity.ok(article);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        ArticleDTO article = articleService.updateArticle(articleId, request, nutritionnisteId);
+        return ResponseEntity.ok(article);
     }
-    
-    // Supprimer un article (nutritionniste auteur seulement)
+
+    // Delete article
     @DeleteMapping("/{articleId}/nutritionniste/{nutritionnisteId}")
     public ResponseEntity<Void> deleteArticle(
             @PathVariable Long articleId,
             @PathVariable Long nutritionnisteId) {
-        try {
-            articleService.deleteArticle(articleId, nutritionnisteId);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        articleService.deleteArticle(articleId, nutritionnisteId);
+        return ResponseEntity.noContent().build();
     }
-    
-    // Récupérer tous les articles (accessible à tous)
+
+    // Get all articles
     @GetMapping
     public ResponseEntity<List<ArticleDTO>> getAllArticles() {
         List<ArticleDTO> articles = articleService.getAllArticles();
         return ResponseEntity.ok(articles);
     }
-    
-    // Récupérer un article par ID (accessible à tous)
+
+    // Get article by ID
     @GetMapping("/{articleId}")
     public ResponseEntity<ArticleDTO> getArticleById(@PathVariable Long articleId) {
-        try {
-            ArticleDTO article = articleService.getArticleById(articleId);
-            return ResponseEntity.ok(article);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        ArticleDTO article = articleService.getArticleById(articleId);
+        return ResponseEntity.ok(article);
     }
-    
-    // Récupérer tous les articles d'un nutritionniste (accessible à tous)
+
+    // Get all articles by nutritionniste
     @GetMapping("/nutritionniste/{nutritionnisteId}")
     public ResponseEntity<List<ArticleDTO>> getArticlesByNutritionniste(
             @PathVariable Long nutritionnisteId) {
         List<ArticleDTO> articles = articleService.getArticlesByNutritionniste(nutritionnisteId);
         return ResponseEntity.ok(articles);
     }
-    
-    
-// ==================== CLIENT ENDPOINTS ====================
-    
-    // Consulter tous les articles (accessible aux clients)
-    @GetMapping("/client/all")
-    public ResponseEntity<List<ArticleDTO>> getAllArticlesForClient() {
-        List<ArticleDTO> articles = articleService.getAllArticles();
-        return ResponseEntity.ok(articles);
-    }
-    
-    // Consulter un article par ID (accessible aux clients)
-    @GetMapping("/client/{articleId}")
-    public ResponseEntity<ArticleDTO> getArticleByIdForClient(@PathVariable Long articleId) {
+
+    // Upload image only
+    @PostMapping("/upload-image")
+    public ResponseEntity<?> uploadImage(@RequestParam("image") MultipartFile file) {
         try {
-            ArticleDTO article = articleService.getArticleById(articleId);
-            return ResponseEntity.ok(article);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            String imageUrl = fileStorageService.storeFile(file);
+            Map<String, String> response = new HashMap<>();
+            response.put("imageUrl", imageUrl);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Upload failed: " + ex.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
     
-    // Consulter les articles d'un nutritionniste spécifique (accessible aux clients)
-    @GetMapping("/client/nutritionniste/{nutritionnisteId}")
-    public ResponseEntity<List<ArticleDTO>> getArticlesByNutritionnisteForClient(
-            @PathVariable Long nutritionnisteId) {
-        List<ArticleDTO> articles = articleService.getArticlesByNutritionniste(nutritionnisteId);
-        return ResponseEntity.ok(articles);
-    }
+    
 }

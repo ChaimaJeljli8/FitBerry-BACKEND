@@ -12,7 +12,7 @@ import com.iset.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
+
 public class ClientService {
     
     private final UserRepository userRepository;
@@ -21,7 +21,7 @@ public class ClientService {
         this.userRepository = userRepository;
     }
     
-    // Remplir le profil du client
+
     @Transactional
     public ClientProfileDTO updateClientProfile(Long clientId, UpdateClientProfileRequest request) {
         User user = userRepository.findById(clientId)
